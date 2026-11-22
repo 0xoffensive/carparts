@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
+import { useToast } from "../ui.jsx";
 
 export default function Login() {
   const { login, register } = useAuth();
+  const toast = useToast();
   const nav = useNavigate();
-  const [mode, setMode] = useState("login");
+  const [params] = useSearchParams();
+  const [mode, setMode] = useState(params.get("mode") === "register" ? "register" : "login");
   const [form, setForm] = useState({ name: "", email: "", password: "", phone: "" });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -19,6 +22,7 @@ export default function Login() {
     try {
       if (mode === "login") await login(form.email, form.password);
       else await register(form);
+      toast(mode === "login" ? "Logged in" : "Account created. You're logged in.");
       nav("/");
     } catch (err) {
       setError(err);
@@ -28,35 +32,39 @@ export default function Login() {
   }
 
   return (
-    <form className="card narrow" onSubmit={submit}>
-      <h2>{mode === "login" ? "Log in" : "Create account"}</h2>
-      {mode === "register" && (
-        <label>Name<input value={form.name} onChange={set("name")} required /></label>
-      )}
-      <label>Email<input type="email" value={form.email} onChange={set("email")} required /></label>
-      <label>
-        Password
-        <input type="password" value={form.password} onChange={set("password")} required maxLength={72} />
-      </label>
-      {mode === "register" && (
-        <label>Phone (optional)<input value={form.phone} onChange={set("phone")} /></label>
-      )}
-      <ErrorBox error={error} />
-      <button disabled={busy}>{mode === "login" ? "Log in" : "Register"}</button>
-      <p className="muted">
-        {mode === "login" ? "No account? " : "Already registered? "}
-        <a href="#" onClick={(e) => { e.preventDefault(); setError(null); setMode(mode === "login" ? "register" : "login"); }}>
-          {mode === "login" ? "Register" : "Log in"}
-        </a>
-      </p>
-    </form>
+    <div className="auth">
+      <div className="seg wide" role="tablist" aria-label="Account">
+        <button role="tab" aria-selected={mode === "login"} className={mode === "login" ? "on" : ""}
+          onClick={() => { setMode("login"); setError(null); }}>Log in</button>
+        <button role="tab" aria-selected={mode === "register"} className={mode === "register" ? "on" : ""}
+          onClick={() => { setMode("register"); setError(null); }}>Create account</button>
+      </div>
+      <form className="form" onSubmit={submit}>
+        {mode === "register" && (
+          <label>Name<input value={form.name} onChange={set("name")} required autoComplete="name" /></label>
+        )}
+        <label>Email<input type="email" value={form.email} onChange={set("email")} required autoComplete="email" /></label>
+        <label>
+          Password
+          <input type="password" value={form.password} onChange={set("password")} required maxLength={72}
+            minLength={mode === "register" ? 8 : undefined}
+            autoComplete={mode === "login" ? "current-password" : "new-password"} />
+          {mode === "register" && <span className="muted">At least 8 characters.</span>}
+        </label>
+        {mode === "register" && (
+          <label>Phone (optional)<input value={form.phone} onChange={set("phone")} autoComplete="tel" /></label>
+        )}
+        <ErrorBox error={error} />
+        <button className="btn primary wide" disabled={busy}>{mode === "login" ? "Log in" : "Create account"}</button>
+      </form>
+    </div>
   );
 }
 
 export function ErrorBox({ error }) {
   if (!error) return null;
   return (
-    <div className="error">
+    <div className="error" role="alert">
       {error.message}
       {error.details?.length > 0 && (
         <ul>

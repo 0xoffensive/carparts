@@ -1,0 +1,14 @@
+.vscode/*
+.vite/
+node_modules/
+dist.
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+.ntvs
+*.njsproj
+*.sln
+*.sw?
+.pnp
+.pnp.js.vite/

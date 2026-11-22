@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react";
 
 // Dev server proxies /api to the Express backend, so no CORS setup is needed.
 export default defineConfig({
-  base: "/st_frontend/",
   plugins: [react()],
   server: {
     proxy: {
